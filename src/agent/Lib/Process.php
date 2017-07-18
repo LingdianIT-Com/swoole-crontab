@@ -81,6 +81,7 @@ class Process
             if (empty($ret)) {
                 $error = Agent::$client->getError();
                 echo("tasks通知中心服失败,code:" . $error['code'] . ",msg:" . $error['message'] . "\n");
+                Flog::log("tasks通知中心服失败,code:" . $error['code'] . ",msg:" . $error['message']);
                 return false;
             }
             foreach ($procs as $pid => $v) {
@@ -189,6 +190,7 @@ class Process
             "msg" => is_scalar($msg) ? $msg : json_encode($msg),
             "createtime" => date("Y-m-d H:i:s"),
         ];
+        Flog::log(print_r($log, true));
         self::$logs->push($log);
     }
 

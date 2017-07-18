@@ -129,6 +129,7 @@ class Agent
      */
     protected function reConnect()
     {
+        Flog::log("reConnect....");
         $this->clearTimer();
         $this->reConnectTimerId = swoole_timer_tick(self::RE_CONNECT_TIME,function (){
             self::$client->connect();

@@ -1,0 +1,70 @@
+FROM php:7.0.19-cli
+MAINTAINER XUFEI <1842070912@qq.com>
+
+# 配置时区
+ENV TZ=Asia/Shanghai
+
+RUN apt-get update && apt-get install -y \
+        libfreetype6-dev \
+        libjpeg62-turbo-dev \
+        libmcrypt-dev \
+        libpng12-dev \
+        libcurl4-nss-dev \
+    && docker-php-ext-install -j$(nproc) iconv mcrypt \
+    && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
+    && docker-php-ext-install -j$(nproc) gd \
+    && docker-php-ext-install -j$(nproc) curl
+
+# install php pdo_mysql
+RUN docker-php-ext-install pdo_mysql mysqli iconv mbstring json mcrypt opcache \
+  && echo "opcache.enable_cli=1" >>  /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini \
+  && echo "opcache.memory_consumption=128" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini \
+  && echo "max_accelerated_files=4000" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini
+
+
+# memcached module with sasl
+#RUN curl -o /root/libmemcached.tgz https://launchpad.net/libmemcached/1.0/1.0.18/+download/libmemcached-1.0.18.tar.gz
+#RUN cd /root && tar zxvf libmemcached.tgz && cd libmemcached-1.0.18 && \
+# ./configure --enable-sasl && make && make install && \
+# cd /root && rm -rf /root/libmemcached* 
+
+# memcached module	
+RUN apt-get install -y libmemcached-dev unzip 
+RUN curl -o /root/memcached.zip https://github.com/php-memcached-dev/php-memcached/archive/php7.zip -L  \
+ && cd /root && unzip memcached.zip && rm memcached.zip && \
+ cd php-memcached-php7 && \
+ phpize && ./configure --enable-sasl && make && make install && \
+ cd /root && rm -rf /root/php-memcached-* && \
+ echo "extension=memcached.so" > /usr/local/etc/php/conf.d/memcached.ini  && \
+ echo "memcached.use_sasl = 1" >> /usr/local/etc/php/conf.d/memcached.ini  
+
+#install redis
+RUN pecl install redis &&  docker-php-ext-enable redis
+
+# install swoole
+RUN pecl install swoole && docker-php-ext-enable swoole
+
+# install yac 
+RUN pecl install yac channel://pecl.php.net/yac-2.0.1 && docker-php-ext-enable yac \
+    && echo "yac.values_memory_size=128M" >> /usr/local/etc/php/conf.d/yac.ini 
+
+# install xhprof
+RUN apt-get  install -y graphviz \
+ && apt-get  install -y libcurl4-openssl-dev libpcre3-dev  \
+ && curl -o /root/php-profiler-extension-master.zip https://codeload.github.com/tideways/php-profiler-extension/zip/master -L \
+ && cd /root && unzip php-profiler-extension-master.zip && rm php-profiler-extension-master.zip && \
+ cd php-profiler-extension-master && \
+ phpize && ./configure && make && make install && \
+ cd /root && rm -rf /root/php-profiler-extension-* && \
+ echo "extension=tideways.so" > /usr/local/etc/php/conf.d/tideways.ini  && \
+ echo "tideways.auto_prepend_library=0" >> /usr/local/etc/php/conf.d/tideways.ini 
+
+# copy php.ini
+
+COPY php.ini /usr/local/etc/php/php.ini
+
+#redirect stdout
+
+RUN mkdir -p /opt/stdout && ln -sf /dev/stdout /opt/stdout/stdout.log
+
+

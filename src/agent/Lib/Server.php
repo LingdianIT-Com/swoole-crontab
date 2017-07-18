@@ -145,6 +145,7 @@ class Server
                 throw new \Exception("protocol not found");
             }
             $data = SOAProtocol::decode($data);
+            Flog::log("on receive ".print_r($data, true));
             call_user_func([$this->server,'onReceive'], $client,$data);
         }
     }
@@ -162,6 +163,7 @@ class Server
         }
         $config = $this->getConfig();
         echo "connect=>host:".$config["host"]." port:".$config["port"]."\n";
+        Flog::log("connect=>host:".$config["host"]." port:".$config["port"]);
         return $this->sw->connect($config["host"],$config["port"],30);
     }
 

@@ -1,0 +1,17 @@
+version: '2'
+services:
+    swoole-crontab:
+        # nginx镜像的路径
+        image: registry.cn-shanghai.aliyuncs.com/lingdian/php-cli
+        volumes:
+            - /Users/xufei/GitWorkspace/swoole-crontab:/data/www/swoole-crontab
+        environment:
+            - DEPLOY_ENV=dev
+        # 退出时自动重启
+        restart: always
+        ports:
+            - 80:80/tcp
+            - 443:443/tcp
+        entrypoint: /bin/bash /data/www/swoole-crontab/docker/start.sh
+
+       
